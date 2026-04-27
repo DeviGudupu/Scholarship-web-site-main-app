@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'https://scholarship-web-site-main-app-production.up.railway.app/api';
 
 // Create a professional Axios instance
 const api = axios.create({
