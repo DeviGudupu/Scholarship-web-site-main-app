@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, User, Mail, Lock, Shield, AlertCircle } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, Shield, AlertCircle, Send, CheckCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useApp } from '../context/AppContext';
 
@@ -9,12 +9,15 @@ type RegisterFormInputs = {
   email: string;
   password: string;
   confirmPassword: string;
+  otp: string;
 };
 
 const RegisterPage: React.FC = () => {
   const [role, setRole] = useState<'student' | 'admin'>('student');
   const [apiError, setApiError] = useState('');
-  const { register: registerUser } = useApp();
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const { register: registerUser, sendOtp } = useApp();
   const navigate = useNavigate();
 
   const {
@@ -27,16 +30,42 @@ const RegisterPage: React.FC = () => {
   });
 
   const password = watch('password');
+  const email = watch('email');
+
+  const handleSendOtp = async () => {
+    setApiError('');
+    if (!email) {
+      setApiError('Please enter your email first.');
+      return;
+    }
+    setIsSendingOtp(true);
+    try {
+      const result = await sendOtp(email);
+      if (result.success) {
+        setIsOtpSent(true);
+      } else {
+        setApiError(result.message || 'Failed to send OTP.');
+      }
+    } catch (err: any) {
+      setApiError(err.message || 'Error connection to mail server');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
 
   const onSubmit = async (data: RegisterFormInputs) => {
     setApiError('');
+    if (!isOtpSent) {
+        setApiError('Please verify your email with OTP first.');
+        return;
+    }
     try {
-      const result = await registerUser(data.email, data.password, data.name, role);
+      const result = await registerUser(data.email, data.password, data.name, role, data.otp);
       if (result.success) {
         navigate(role === 'admin' ? '/admin' : '/dashboard');
         return;
       }
-      setApiError(result.message || 'Registration failed. Please try again.');
+      setApiError(result.message || 'Registration failed.');
     } catch (err: any) {
       setApiError(err.message || 'An unexpected error occurred');
     }
@@ -51,7 +80,7 @@ const RegisterPage: React.FC = () => {
               <UserPlus className="h-8 w-8 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Create Account</h2>
-            <p className="text-gray-500 mt-2 font-medium">Join our scholarship community</p>
+            <p className="text-gray-500 mt-2 font-medium uppercase tracking-widest text-[10px]">Scholarship Management Portal</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -62,150 +91,115 @@ const RegisterPage: React.FC = () => {
                   type="button"
                   onClick={() => setRole('student')}
                   className={`px-4 py-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1 ${
-                    role === 'student'
-                      ? 'border-blue-600 bg-blue-50 text-blue-600 ring-4 ring-blue-100'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                    role === 'student' ? 'border-blue-600 bg-blue-50 text-blue-600 ring-4 ring-blue-100' : 'border-gray-200 text-gray-600'
                   }`}
                 >
                   <User className="h-5 w-5" />
-                  <span className="text-sm font-bold">Student</span>
+                  <span className="text-xs font-bold">Student</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setRole('admin')}
                   className={`px-4 py-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1 ${
-                    role === 'admin'
-                      ? 'border-blue-600 bg-blue-50 text-blue-600 ring-4 ring-blue-100'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                    role === 'admin' ? 'border-blue-600 bg-blue-50 text-blue-600 ring-4 ring-blue-100' : 'border-gray-200 text-gray-600'
                   }`}
                 >
                   <Shield className="h-5 w-5" />
-                  <span className="text-sm font-bold">Admin</span>
+                  <span className="text-xs font-bold">Admin</span>
                 </button>
               </div>
             </div>
 
             {apiError && (
-              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-lg px-4 py-3 flex items-center shadow-sm">
-                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-                {apiError}
+              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 text-[11px] rounded-lg px-4 py-3 flex items-start shadow-sm leading-relaxed">
+                <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                <span>{apiError}</span>
               </div>
             )}
 
-            <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                Full Name
-              </label>
+            <div className="space-y-4">
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
-                  id="name"
-                  type="text"
-                  {...register('name', { required: 'Full name is required' })}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-4 transition-all ${
-                    errors.name ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-100'
-                  }`}
-                  placeholder="John Doe"
+                  {...register('name', { required: 'Name is required' })}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+                  placeholder="Full Name"
                 />
               </div>
-              {errors.name && <p className="mt-1 text-xs text-red-600 font-medium">{errors.name.message}</p>}
-            </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
-              </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
-                  id="email"
                   type="email"
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address'
-                    }
-                  })}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-4 transition-all ${
-                    errors.email ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-100'
-                  }`}
-                  placeholder="you@example.com"
+                  {...register('email', { required: 'Email is required' })}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+                  placeholder="Email Address"
                 />
               </div>
-              {errors.email && <p className="mt-1 text-xs text-red-600 font-medium">{errors.email.message}</p>}
-            </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  id="password"
-                  type="password"
-                  {...register('password', {
-                    required: 'Password is required',
-                    minLength: { value: 6, message: 'Password must be at least 6 characters' }
-                  })}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-4 transition-all ${
-                    errors.password ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-100'
-                  }`}
-                  placeholder="••••••••"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <input
+                    type="password"
+                    {...register('password', { required: true, minLength: 6 })}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm"
+                    placeholder="Password"
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <input
+                    type="password"
+                    {...register('confirmPassword', { validate: v => v === password })}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm"
+                    placeholder="Confirm"
+                  />
+                </div>
               </div>
-              {errors.password && <p className="mt-1 text-xs text-red-600 font-medium">{errors.password.message}</p>}
-            </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  {...register('confirmPassword', {
-                    required: 'Please confirm your password',
-                    validate: value => value === password || 'Passwords do not match'
-                  })}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-4 transition-all ${
-                    errors.confirmPassword ? 'border-red-300 bg-red-50 focus:ring-red-100' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-100'
-                  }`}
-                  placeholder="••••••••"
-                />
-              </div>
-              {errors.confirmPassword && <p className="mt-1 text-xs text-red-600 font-medium">{errors.confirmPassword.message}</p>}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full bg-blue-600 text-white py-3.5 rounded-xl transition-all font-bold text-lg shadow-lg shadow-blue-100 flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-[0.98] ${
-                isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
-              }`}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Creating Account...
-                </>
-              ) : (
-                `Create ${role === 'admin' ? 'Admin' : 'Student'} Account`
+              {isOtpSent && (
+                <div className="relative animate-slide">
+                  <div className="flex items-center gap-2 mb-2 ml-1">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-xs font-bold text-green-600 uppercase tracking-tighter">Enter the 6-digit code sent to your mail</span>
+                  </div>
+                  <Shield className="absolute left-3 top-[38px] text-blue-600 h-5 w-5" />
+                  <input
+                    {...register('otp', { required: true })}
+                    className="w-full pl-10 pr-4 py-4 bg-blue-50 border-2 border-blue-200 rounded-xl focus:outline-none focus:border-blue-600 transition-all font-black text-xl tracking-[0.3em] text-center"
+                    placeholder="000000"
+                  />
+                </div>
               )}
-            </button>
+            </div>
+
+            {!isOtpSent ? (
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                disabled={isSendingOtp}
+                className="w-full bg-blue-600 text-white py-3.5 rounded-xl transition-all font-bold shadow-lg shadow-blue-100 flex items-center justify-center gap-2 hover:bg-black active:scale-95 disabled:opacity-50"
+              >
+                {isSendingOtp ? <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <><Send className="h-4 w-4" /> Send OTP to Mail</>}
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-gray-900 text-white py-3.5 rounded-xl transition-all font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-black active:scale-95 disabled:opacity-50"
+              >
+                {isSubmitting ? <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : `Register as ${role}`}
+              </button>
+            )}
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-500 font-medium">
-              Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-bold underline underline-offset-4 decoration-2 decoration-blue-200 hover:decoration-blue-600 transition-all">
-                Sign in here
-              </Link>
-            </p>
-          </div>
+          <p className="mt-8 text-center text-sm font-medium text-gray-500">
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-bold underline underline-offset-4 decoration-2 decoration-blue-100">
+              Sign In
+            </Link>
+          </p>
         </div>
       </div>
     </div>

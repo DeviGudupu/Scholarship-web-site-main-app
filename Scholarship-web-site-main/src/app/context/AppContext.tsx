@@ -17,6 +17,14 @@ export interface Application {
   id: string;
   scholarshipId: string;
   studentId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  gpa: string;
+  major: string;
+  year: string;
+  statement: string;
   status: 'submitted' | 'pending' | 'approved' | 'rejected';
   submittedDate: string;
   documents: string[];
@@ -34,10 +42,11 @@ interface AppContextType {
   user: User | null;
   login: (email: string, password: string, role: 'student' | 'admin') => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
-  register: (email: string, password: string, name: string, role: 'student' | 'admin') => Promise<{ success: boolean; message?: string }>;
+  register: (email: string, password: string, name: string, role: 'student' | 'admin', otp: string) => Promise<{ success: boolean; message?: string }>;
+  sendOtp: (email: string) => Promise<{ success: boolean; message?: string }>;
   scholarships: Scholarship[];
   applications: Application[];
-  addApplication: (scholarshipId: string) => Promise<void>;
+  addApplication: (scholarshipId: string, details: any) => Promise<void>;
   deleteApplication: (applicationId: string) => Promise<void>;
   updateApplicationStatus: (applicationId: string, status: Application['status']) => Promise<void>;
   addScholarship: (scholarship: Omit<Scholarship, 'id'>) => Promise<void>;
@@ -111,9 +120,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setUser(null);
   };
 
-  const register = async (email: string, password: string, name: string, role: 'student' | 'admin'): Promise<{ success: boolean; message?: string }> => {
+  const register = async (email: string, password: string, name: string, role: 'student' | 'admin', otp: string): Promise<{ success: boolean; message?: string }> => {
     try {
-      const data = await authService.register({ email, password, name, role });
+      const data = await authService.register({ email, password, name, role, otp });
       setUser(data as User);
       return { success: true };
     } catch (error: any) {
@@ -121,10 +130,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const addApplication = async (scholarshipId: string) => {
+  const sendOtp = async (email: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      await authService.sendOtp(email);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  };
+
+  const addApplication = async (scholarshipId: string, details: any) => {
     if (!user) return;
     try {
-      await applicationService.create({ scholarshipId, studentId: user.id });
+      await applicationService.create({ ...details, scholarshipId, studentId: user.id });
       await fetchApplications();
     } catch (error) {
       console.error('Error adding application:', error);
@@ -185,6 +203,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       login,
       logout,
       register,
+      sendOtp,
       scholarships,
       applications,
       addApplication,

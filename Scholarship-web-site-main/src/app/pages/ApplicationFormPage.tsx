@@ -65,7 +65,7 @@ const ApplicationFormPage: React.FC = () => {
   const onSubmit = async (data: ApplicationFormInputs) => {
     if (!id) return;
     try {
-      await addApplication(id);
+      await addApplication(id, data);
       setSubmitted(true);
     } catch (error) {
       console.error('Submission failed', error);

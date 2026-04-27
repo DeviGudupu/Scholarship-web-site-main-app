@@ -9,6 +9,7 @@ public class RegisterRequest {
     private String password;
     private String name;
     private Role role;
+    private String otp;
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
@@ -18,4 +19,6 @@ public class RegisterRequest {
     public void setName(String name) { this.name = name; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+    public String getOtp() { return otp; }
+    public void setOtp(String otp) { this.otp = otp; }
 }
