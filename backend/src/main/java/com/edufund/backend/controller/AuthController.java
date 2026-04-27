@@ -69,12 +69,6 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         
-        // Verify OTP
-        String savedOtp = otpStorage.get(email);
-        if (savedOtp == null || !savedOtp.equals(request.getOtp())) {
-            return ResponseEntity.badRequest().body("Invalid or expired OTP");
-        }
-        
         if (userRepository.existsByEmailAndRole(email, request.getRole())) {
             return ResponseEntity.badRequest().body("An account already exists for this role with the email: " + email);
         }

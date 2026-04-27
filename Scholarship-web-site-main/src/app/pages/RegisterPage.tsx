@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, User, Mail, Lock, Shield, AlertCircle, Send, CheckCircle } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, Shield, AlertCircle, CheckCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useApp } from '../context/AppContext';
 
@@ -9,15 +9,12 @@ type RegisterFormInputs = {
   email: string;
   password: string;
   confirmPassword: string;
-  otp: string;
 };
 
 const RegisterPage: React.FC = () => {
   const [role, setRole] = useState<'student' | 'admin'>('student');
   const [apiError, setApiError] = useState('');
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const { register: registerUser, sendOtp } = useApp();
+  const { register: registerUser } = useApp();
   const navigate = useNavigate();
 
   const {
@@ -30,37 +27,12 @@ const RegisterPage: React.FC = () => {
   });
 
   const password = watch('password');
-  const email = watch('email');
-
-  const handleSendOtp = async () => {
-    setApiError('');
-    if (!email) {
-      setApiError('Please enter your email first.');
-      return;
-    }
-    setIsSendingOtp(true);
-    try {
-      const result = await sendOtp(email);
-      if (result.success) {
-        setIsOtpSent(true);
-      } else {
-        setApiError(result.message || 'Failed to send OTP.');
-      }
-    } catch (err: any) {
-      setApiError(err.message || 'Error connection to mail server');
-    } finally {
-      setIsSendingOtp(false);
-    }
-  };
 
   const onSubmit = async (data: RegisterFormInputs) => {
     setApiError('');
-    if (!isOtpSent) {
-        setApiError('Please verify your email with OTP first.');
-        return;
-    }
     try {
-      const result = await registerUser(data.email, data.password, data.name, role, data.otp);
+      // Passing '000000' as a dummy OTP since backend now ignores it
+      const result = await registerUser(data.email, data.password, data.name, role, '000000');
       if (result.success) {
         navigate(role === 'admin' ? '/admin' : '/dashboard');
         return;
@@ -157,41 +129,19 @@ const RegisterPage: React.FC = () => {
                   />
                 </div>
               </div>
-
-              {isOtpSent && (
-                <div className="relative animate-slide">
-                  <div className="flex items-center gap-2 mb-2 ml-1">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-xs font-bold text-green-600 uppercase tracking-tighter">Enter the 6-digit code sent to your mail</span>
-                  </div>
-                  <Shield className="absolute left-3 top-[38px] text-blue-600 h-5 w-5" />
-                  <input
-                    {...register('otp', { required: true })}
-                    className="w-full pl-10 pr-4 py-4 bg-blue-50 border-2 border-blue-200 rounded-xl focus:outline-none focus:border-blue-600 transition-all font-black text-xl tracking-[0.3em] text-center"
-                    placeholder="000000"
-                  />
-                </div>
-              )}
             </div>
 
-            {!isOtpSent ? (
-              <button
-                type="button"
-                onClick={handleSendOtp}
-                disabled={isSendingOtp}
-                className="w-full bg-blue-600 text-white py-3.5 rounded-xl transition-all font-bold shadow-lg shadow-blue-100 flex items-center justify-center gap-2 hover:bg-black active:scale-95 disabled:opacity-50"
-              >
-                {isSendingOtp ? <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <><Send className="h-4 w-4" /> Send OTP to Mail</>}
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gray-900 text-white py-3.5 rounded-xl transition-all font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-black active:scale-95 disabled:opacity-50"
-              >
-                {isSubmitting ? <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : `Register as ${role}`}
-              </button>
-            )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 text-white py-3.5 rounded-xl transition-all font-bold shadow-lg shadow-blue-100 flex items-center justify-center gap-2 hover:bg-black active:scale-95 disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                `Register as ${role === 'student' ? 'Student' : 'Admin'}`
+              )}
+            </button>
           </form>
 
           <p className="mt-8 text-center text-sm font-medium text-gray-500">
