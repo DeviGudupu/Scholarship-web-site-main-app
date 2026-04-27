@@ -70,15 +70,12 @@ public class AuthController {
         String email = request.getEmail().trim().toLowerCase();
         
         if (userRepository.existsByEmailAndRole(email, request.getRole())) {
-            return ResponseEntity.badRequest().body("An account already exists for this role with the email: " + email);
+            return ResponseEntity.badRequest().body("An account already exists with this email.");
         }
         
         String userId = request.getRole().name() + UUID.randomUUID().toString().substring(0, 8);
-        User user = new User(userId, email, request.getPassword(), request.getName(), request.getRole());
+        User user = new User(userId, email, passwordEncoder.encode(request.getPassword()), request.getName(), request.getRole());
         userRepository.save(user);
-        
-        // Clear OTP after successful registration
-        otpStorage.remove(email);
         
         return ResponseEntity.ok(user);
     }
