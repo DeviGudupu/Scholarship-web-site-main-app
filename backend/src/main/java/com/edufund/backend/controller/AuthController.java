@@ -67,6 +67,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        System.out.println("DEBUG: Registration attempt for email: " + request.getEmail());
         String email = request.getEmail().trim().toLowerCase();
         
         if (userRepository.existsByEmailAndRole(email, request.getRole())) {
@@ -77,6 +78,7 @@ public class AuthController {
         User user = new User(userId, email, passwordEncoder.encode(request.getPassword()), request.getName(), request.getRole());
         userRepository.save(user);
         
+        System.out.println("DEBUG: User registered successfully in database!");
         return ResponseEntity.ok(user);
     }
 }
