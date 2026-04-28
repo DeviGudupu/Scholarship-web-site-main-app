@@ -225,21 +225,78 @@ const AdminDashboard: React.FC = () => {
                     <h2 className="text-xl font-black">Application Review</h2>
                     <button onClick={() => setViewingApplication(null)}><X className="h-6 w-6"/></button>
                 </div>
-                <div className="p-8 space-y-6 overflow-y-auto max-h-[60vh]">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div><p className="text-[10px] font-black text-gray-400 uppercase">Full Name</p><p className="font-bold">{viewingApplication.fullName || 'N/A'}</p></div>
-                        <div><p className="text-[10px] font-black text-gray-400 uppercase">Email</p><p className="font-bold">{viewingApplication.email || 'N/A'}</p></div>
-                        <div><p className="text-[10px] font-black text-gray-400 uppercase">GPA</p><p className="font-black text-green-600">{viewingApplication.gpa || 'N/A'}</p></div>
-                        <div><p className="text-[10px] font-black text-gray-400 uppercase">Major</p><p className="font-bold">{viewingApplication.major || 'N/A'}</p></div>
+                <div className="p-8 space-y-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Full Name</p>
+                            <p className="font-bold text-gray-900">{viewingApplication.fullName || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Email Address</p>
+                            <p className="font-bold text-gray-900 truncate">{viewingApplication.email || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Phone Number</p>
+                            <p className="font-bold text-gray-900">{viewingApplication.phone || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Academic Year</p>
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-3 w-3 text-blue-600" />
+                                <p className="font-bold text-gray-900">{viewingApplication.year || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Current GPA</p>
+                            <p className="font-black text-green-600 text-lg">{viewingApplication.gpa || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Major / Course</p>
+                            <p className="font-bold text-gray-900">{viewingApplication.major || 'N/A'}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Residential Address</p>
+                            <div className="flex items-start gap-2">
+                                <MapPin className="h-3 w-3 text-blue-600 mt-1" />
+                                <p className="font-bold text-gray-900">{viewingApplication.address || 'N/A'}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                        <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Personal Statement</p>
-                        <p className="text-sm italic text-gray-600">"{viewingApplication.statement || 'No statement provided.'}"</p>
+
+                    <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Personal Statement</p>
+                        <p className="text-sm italic text-gray-600 leading-relaxed break-words whitespace-pre-wrap">
+                            "{viewingApplication.statement || 'No statement provided.'}"
+                        </p>
                     </div>
+
+                    {viewingApplication.documents && viewingApplication.documents.length > 0 && (
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Submitted Documents</p>
+                            <div className="flex flex-wrap gap-2">
+                                {viewingApplication.documents.map((doc, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-100">
+                                        <FileText className="h-3 w-3" />
+                                        {doc.split('/').pop() || `Document ${idx + 1}`}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="p-6 bg-gray-50 flex gap-3 border-t">
-                    <button onClick={() => { updateApplicationStatus(viewingApplication.id, 'approved'); setViewingApplication(null); }} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-black text-sm">APPROVE</button>
-                    <button onClick={() => { updateApplicationStatus(viewingApplication.id, 'rejected'); setViewingApplication(null); }} className="flex-1 bg-red-600 text-white py-3 rounded-xl font-black text-sm">REJECT</button>
+                <div className="p-6 bg-gray-50 flex gap-4 border-t border-gray-100">
+                    <button 
+                        onClick={() => { updateApplicationStatus(viewingApplication.id, 'approved'); setViewingApplication(null); }} 
+                        className="flex-1 bg-green-600 text-white py-4 rounded-xl font-black text-sm shadow-lg shadow-green-100 hover:bg-green-700 transition-all active:scale-95"
+                    >
+                        APPROVE APPLICATION
+                    </button>
+                    <button 
+                        onClick={() => { updateApplicationStatus(viewingApplication.id, 'rejected'); setViewingApplication(null); }} 
+                        className="flex-1 bg-red-600 text-white py-4 rounded-xl font-black text-sm shadow-lg shadow-red-100 hover:bg-red-700 transition-all active:scale-95"
+                    >
+                        REJECT APPLICATION
+                    </button>
                 </div>
               </motion.div>
             </div>
