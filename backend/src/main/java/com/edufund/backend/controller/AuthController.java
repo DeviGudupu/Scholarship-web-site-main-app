@@ -37,10 +37,11 @@ public class AuthController {
         otpStorage.put(email, otp);
         
         try {
-            emailService.sendOtpEmail(email, otp);
-            return ResponseEntity.ok("OTP sent successfully to " + email);
+            System.out.println("DEBUG: Attempting to send OTP manually for email: " + email);
+            // emailService.sendOtpEmail(email, otp); // Temporarily commented due to SMTP issues
+            return ResponseEntity.ok("OTP sent successfully (Simulated)");
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Failed to send OTP: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error sending email: " + e.getMessage());
         }
     }
 
@@ -67,7 +68,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        System.out.println("DEBUG: Registration attempt for email: " + request.getEmail());
+        System.out.println("DEBUG: Registration attempt for: " + request.getEmail());
         String email = request.getEmail().trim().toLowerCase();
         
         if (userRepository.existsByEmailAndRole(email, request.getRole())) {
@@ -75,10 +76,10 @@ public class AuthController {
         }
         
         String userId = request.getRole().name() + UUID.randomUUID().toString().substring(0, 8);
-        User user = new User(userId, email, passwordEncoder.encode(request.getPassword()), request.getName(), request.getRole());
+        User user = new User(userId, email, request.getPassword(), request.getName(), request.getRole());
         userRepository.save(user);
         
-        System.out.println("DEBUG: User registered successfully in database!");
+        System.out.println("DEBUG: Registration Successful for: " + email);
         return ResponseEntity.ok(user);
     }
 }
