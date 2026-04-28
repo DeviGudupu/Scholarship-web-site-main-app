@@ -13,10 +13,13 @@ public enum Role {
 
     @JsonCreator
     public static Role fromString(String value) {
-        if (value == null) return null;
+        if (value == null || value.trim().isEmpty()) return null;
         try {
-            return Role.valueOf(value.toUpperCase());
+            return Role.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
+            // Handle common variations
+            if (value.trim().equalsIgnoreCase("student")) return STUDENT;
+            if (value.trim().equalsIgnoreCase("admin")) return ADMIN;
             return null;
         }
     }
