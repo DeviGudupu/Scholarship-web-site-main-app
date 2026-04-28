@@ -26,7 +26,7 @@ const LoginPage: React.FC = () => {
   const onSubmit = async (data: LoginFormInputs) => {
     setApiError('');
     try {
-      const result = await login(data.email, data.password, role);
+      const result = await login(data.email, data.password, role.toUpperCase() as 'student' | 'admin');
       if (result.success) {
         navigate(role === 'admin' ? '/admin' : '/dashboard');
         return;

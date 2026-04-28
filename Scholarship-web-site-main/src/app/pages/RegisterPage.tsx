@@ -32,7 +32,7 @@ const RegisterPage: React.FC = () => {
     setApiError('');
     try {
       // Passing '000000' as a dummy OTP since backend now ignores it
-      const result = await registerUser(data.email, data.password, data.name, role, '000000');
+      const result = await registerUser(data.email, data.password, data.name, role.toUpperCase() as 'student' | 'admin', '000000');
       if (result.success) {
         navigate(role === 'admin' ? '/admin' : '/dashboard');
         return;
