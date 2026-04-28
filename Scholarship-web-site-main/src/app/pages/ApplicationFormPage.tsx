@@ -65,7 +65,8 @@ const ApplicationFormPage: React.FC = () => {
   const onSubmit = async (data: ApplicationFormInputs) => {
     if (!id) return;
     try {
-      await addApplication(id, data);
+      // Include the uploaded file names in the application data
+      await addApplication(id, { ...data, documents: uploadedFiles });
       setSubmitted(true);
     } catch (error) {
       console.error('Submission failed', error);
