@@ -68,18 +68,32 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        System.out.println("DEBUG: Registration attempt for: " + request.getEmail());
+        System.out.println("DEBUG: Registration attempt for email: " + request.getEmail() + " with role: " + request.getRole());
+        
+        if (request.getEmail() == null || request.getRole() == null) {
+            return ResponseEntity.badRequest().body("Email and role are required.");
+        }
+
         String email = request.getEmail().trim().toLowerCase();
         
-        if (userRepository.existsByEmailAndRole(email, request.getRole())) {
-            return ResponseEntity.badRequest().body("An account already exists with this email.");
+        // Use the more comprehensive existsByEmail check
+        if (userRepository.existsByEmail(email)) {
+            System.out.println("DEBUG: Registration failed - Email already exists: " + email);
+            return ResponseEntity.badRequest().body("An account with this email already exists.");
         }
         
-        String userId = request.getRole().name() + UUID.randomUUID().toString().substring(0, 8);
-        User user = new User(userId, email, request.getPassword(), request.getName(), request.getRole());
-        userRepository.save(user);
-        
-        System.out.println("DEBUG: Registration Successful for: " + email);
-        return ResponseEntity.ok(user);
+        try {
+            String roleStr = request.getRole().name();
+            String userId = roleStr.toLowerCase() + UUID.randomUUID().toString().substring(0, 8);
+            User user = new User(userId, email, request.getPassword(), request.getName(), request.getRole());
+            userRepository.save(user);
+            
+            System.out.println("DEBUG: Registration Successful for: " + email + " UserID: " + userId);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            System.err.println("ERROR during registration: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error creating account: " + e.getMessage());
+        }
     }
 }

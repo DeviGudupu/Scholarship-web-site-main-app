@@ -1,6 +1,11 @@
 package com.edufund.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum Role {
-    student,
-    admin
+    @JsonProperty("student")
+    STUDENT,
+    
+    @JsonProperty("admin")
+    ADMIN
 }

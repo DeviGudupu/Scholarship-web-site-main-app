@@ -19,8 +19,8 @@ public class DataInitializer {
         return args -> {
             // Initial Users
             if (userRepository.count() == 0) {
-                userRepository.save(new User("student1", "student@edufund.com", "student123", "Demo Student", Role.student));
-                userRepository.save(new User("admin1", "admin@edufund.com", "admin123", "Demo Admin", Role.admin));
+                userRepository.save(new User("student1", "student@edufund.com", "student123", "Demo Student", Role.STUDENT));
+                userRepository.save(new User("admin1", "admin@edufund.com", "admin123", "Demo Admin", Role.ADMIN));
             }
 
             // Initial Scholarships
