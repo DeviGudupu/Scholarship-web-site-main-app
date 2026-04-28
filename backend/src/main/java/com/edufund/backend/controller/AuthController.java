@@ -47,23 +47,36 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            if (user.getPassword().equals(request.getPassword())) {
-                if (user.getRole().equals(request.getRole())) {
-                    return ResponseEntity.ok(user);
-                } else {
-                    return ResponseEntity.status(401).body("Incorrect role selected for this account");
-                }
-            } else {
-                return ResponseEntity.status(401).body("Invalid password");
+        try {
+            if (request == null || request.getEmail() == null || request.getPassword() == null) {
+                return ResponseEntity.badRequest().body("Email and password are required");
             }
+
+            String email = request.getEmail().trim().toLowerCase();
+            System.out.println("DEBUG: Login attempt for email: " + email + " with role: " + request.getRole());
+
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                if (user.getPassword().equals(request.getPassword())) {
+                    if (request.getRole() != null && user.getRole().equals(request.getRole())) {
+                        System.out.println("DEBUG: Login successful for: " + email);
+                        return ResponseEntity.ok(user);
+                    } else {
+                        return ResponseEntity.status(401).body("Incorrect role selected for this account");
+                    }
+                } else {
+                    return ResponseEntity.status(401).body("Invalid password");
+                }
+            }
+            
+            return ResponseEntity.status(401).body("No account found with this email");
+        } catch (Exception e) {
+            System.err.println("ERROR during login for " + (request != null ? request.getEmail() : "unknown") + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Internal server error during login: " + e.getMessage());
         }
-        
-        return ResponseEntity.status(401).body("No account found with this email");
     }
 
     @PostMapping("/register")

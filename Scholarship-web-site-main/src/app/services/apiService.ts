@@ -12,12 +12,17 @@ const api = axios.create({
 
 // Interceptor to automatically add Auth Token to every request
 api.interceptors.request.use((config) => {
-  const user = localStorage.getItem('edufund_current_user');
-  if (user) {
-    const parsedUser = JSON.parse(user);
-    if (parsedUser.token) {
-      config.headers.Authorization = `Bearer ${parsedUser.token}`;
+  try {
+    const user = localStorage.getItem('edufund_current_user');
+    if (user && user !== 'undefined' && user !== 'null') {
+      const parsedUser = JSON.parse(user);
+      if (parsedUser && parsedUser.token) {
+        config.headers.Authorization = `Bearer ${parsedUser.token}`;
+      }
     }
+  } catch (error) {
+    console.error('Error parsing user from localStorage:', error);
+    localStorage.removeItem('edufund_current_user'); // Clear corrupted data
   }
   return config;
 }, (error) => {
