@@ -82,6 +82,26 @@
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight font-bold;
   }
+
+  /* Global Cursor Fixes */
+  button, 
+  [type='button'], 
+  [type='reset'], 
+  [type='submit'],
+  .cursor-pointer,
+  a {
+    cursor: pointer !important;
+  }
+
+  input, 
+  textarea, 
+  [contenteditable="true"] {
+    cursor: text;
+  }
+
+  label {
+    cursor: pointer;
+  }
 }
 
 @layer components {
