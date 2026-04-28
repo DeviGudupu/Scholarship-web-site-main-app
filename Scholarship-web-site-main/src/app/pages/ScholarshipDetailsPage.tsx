@@ -1,13 +1,15 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Calendar, DollarSign, Building, CheckCircle, FileText, ArrowLeft, ShieldCheck, Bookmark, Share2, Sparkles, Send } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Calendar, DollarSign, Building, CheckCircle, FileText, ArrowLeft, ShieldCheck, Bookmark, Share2, Sparkles, Send, MapPin, CreditCard, X, Heart } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 
 const ScholarshipDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { scholarships, applications, user } = useApp();
   const navigate = useNavigate();
+  const [showPaymentModal, setShowPaymentModal] = React.useState(false);
+  const [paymentStatus, setPaymentStatus] = React.useState<'idle' | 'processing' | 'success'>('idle');
 
   const scholarship = scholarships.find(s => s.id === id);
   const hasApplied = applications.some(
@@ -42,6 +44,17 @@ const ScholarshipDetailsPage: React.FC = () => {
       return;
     }
     navigate(`/apply/${scholarship.id}`);
+  };
+
+  const handlePayment = () => {
+    setPaymentStatus('processing');
+    setTimeout(() => {
+        setPaymentStatus('success');
+        setTimeout(() => {
+            setShowPaymentModal(false);
+            setPaymentStatus('idle');
+        }, 2000);
+    }, 1500);
   };
 
   return (
@@ -131,6 +144,35 @@ const ScholarshipDetailsPage: React.FC = () => {
                     </div>
                 </motion.div>
 
+                {/* Map Section */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-[3rem] p-10 border border-gray-100 shadow-sm overflow-hidden"
+                >
+                    <h3 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-3">
+                        <MapPin className="h-6 w-6 text-red-500" />
+                        Provider Location
+                    </h3>
+                    <div className="w-full h-[300px] rounded-[2rem] overflow-hidden border border-gray-100">
+                        <iframe
+                            title="Location Map"
+                            width="100%"
+                            height="100%"
+                            frameBorder="0"
+                            style={{ border: 0 }}
+                            srcDoc={`
+                                <div style="width:100%;height:100%;background:#f1f5f9;display:flex;align-items:center;justify-center;flex-direction:column;font-family:sans-serif;color:#64748b;">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;margin-bottom:12px;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <div style="font-weight:bold;font-size:18px;color:#0f172a;">${scholarship.organization}</div>
+                                    <div style="font-size:12px;margin-top:4px;">Main Campus & Administrative Office</div>
+                                    <div style="margin-top:20px;padding:8px 16px;background:#fff;border-radius:12px;box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1);font-size:11px;font-weight:bold;color:#2563eb;">OPEN IN GOOGLE MAPS</div>
+                                </div>
+                            `}
+                        />
+                    </div>
+                </motion.div>
+
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -211,12 +253,13 @@ const ScholarshipDetailsPage: React.FC = () => {
                                 </button>
                             )}
 
-                            <Link
-                                to="/scholarships"
-                                className="block w-full py-5 rounded-[2rem] border-2 border-white/20 text-white font-black text-sm hover:bg-white/10 transition-all"
+                            <button
+                                onClick={() => setShowPaymentModal(true)}
+                                className="block w-full py-5 rounded-[2rem] border-2 border-white/20 text-white font-black text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                             >
-                                Browse Others
-                            </Link>
+                                <Heart className="h-4 w-4 text-pink-300" />
+                                Support this Fund
+                            </button>
                         </div>
 
                         {!user && (
@@ -246,6 +289,81 @@ const ScholarshipDetailsPage: React.FC = () => {
             </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md">
+            <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-[2.5rem] w-full max-w-md p-10 shadow-2xl overflow-hidden relative"
+            >
+                <button 
+                    onClick={() => setShowPaymentModal(false)}
+                    className="absolute top-8 right-8 text-gray-400 hover:text-gray-900 transition-colors"
+                >
+                    <X className="h-6 w-6" />
+                </button>
+
+                {paymentStatus === 'success' ? (
+                    <div className="text-center py-10">
+                        <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <CheckCircle className="h-10 w-10" />
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-900 mb-2">Contribution Successful</h3>
+                        <p className="text-gray-500 font-medium">Thank you for supporting the future of education.</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex items-center gap-3 mb-10">
+                            <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                                <CreditCard className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-gray-900">Secure Payment</h3>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Powered by EduPay</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex justify-between items-center">
+                                <span className="font-bold text-gray-600">Contribution Amount</span>
+                                <span className="text-2xl font-black text-gray-900">$50.00</span>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="p-4 bg-gray-50 rounded-xl border-2 border-transparent focus-within:border-blue-500 transition-all">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Card Details</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex-1 font-bold text-gray-900">**** **** **** 4242</div>
+                                        <div className="text-xs font-black text-blue-600">VISA</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handlePayment}
+                                disabled={paymentStatus === 'processing'}
+                                className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black text-lg shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {paymentStatus === 'processing' ? (
+                                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <>Pay and Support</>
+                                )}
+                            </button>
+                            <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                Your payment is encrypted and 100% secure.
+                            </p>
+                        </div>
+                    </>
+                )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

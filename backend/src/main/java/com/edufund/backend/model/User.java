@@ -21,6 +21,9 @@ public class User {
     private String name;
     
     private Role role;
+    
+    @Transient
+    private String token;
 
     public User() {}
 
@@ -42,4 +45,6 @@ public class User {
     public void setName(String name) { this.name = name; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 }

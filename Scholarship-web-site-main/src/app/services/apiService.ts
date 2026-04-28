@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// const API_BASE_URL = 'http://localhost:8080/api';
 const API_BASE_URL = 'https://scholarship-web-site-main-app-production.up.railway.app/api';
 
 // Create a professional Axios instance

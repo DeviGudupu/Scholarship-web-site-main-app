@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { 
   Plus, Edit, Trash2, Users, FileText, DollarSign, Clock, AlertCircle, X, 
-  Search, CheckCircle, Filter, Download, Send, Eye, Phone, MapPin, GraduationCap, Calendar, TrendingUp, User
+  Search, CheckCircle, Filter, Download, Send, Eye, Phone, MapPin, GraduationCap, Calendar, TrendingUp, User, PieChart as PieIcon, BarChart as BarIcon
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  PieChart, Pie, Cell 
+} from 'recharts';
 import { useApp, Scholarship, Application } from '../context/AppContext';
 
 type ScholarshipFormInputs = {
@@ -37,6 +41,18 @@ const AdminDashboard: React.FC = () => {
   const totalApplications = applications.length;
   const totalAmount = scholarships.reduce((sum, s) => sum + s.amount, 0);
   const activeScholarships = scholarships.filter(s => new Date(s.deadline) > new Date()).length;
+
+  // Chart Data Preparation
+  const statusData = [
+    { name: 'Approved', value: applications.filter(a => a.status === 'approved').length, color: '#10b981' },
+    { name: 'Pending', value: applications.filter(a => a.status === 'pending' || a.status === 'submitted').length, color: '#3b82f6' },
+    { name: 'Rejected', value: applications.filter(a => a.status === 'rejected').length, color: '#ef4444' },
+  ].filter(d => d.value > 0);
+
+  const scholarshipStats = scholarships.map(s => ({
+    name: s.title.length > 20 ? s.title.substring(0, 20) + '...' : s.title,
+    applications: applications.filter(a => a.scholarshipId === s.id).length
+  })).sort((a, b) => b.applications - a.applications).slice(0, 5);
 
   const handleCloseModal = () => {
     setShowAddModal(false);
@@ -130,6 +146,92 @@ const AdminDashboard: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Graph Analysis Section */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12"
+        >
+          {/* Applications Distribution Chart */}
+          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                <PieIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-black text-gray-900">Status Distribution</h3>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Real-time breakdown</p>
+              </div>
+            </div>
+            <div className="h-[300px] w-full">
+              {statusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={8}
+                      dataKey="value"
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Legend verticalAlign="bottom" height={36}/>
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400 font-bold italic">No data available for analysis</div>
+              )}
+            </div>
+          </div>
+
+          {/* Popular Scholarships Chart */}
+          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl">
+                <BarIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-black text-gray-900">Application Volume</h3>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Top Scholarships by Demand</p>
+              </div>
+            </div>
+            <div className="h-[300px] w-full">
+              {scholarshipStats.some(s => s.applications > 0) ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={scholarshipStats} layout="vertical" margin={{ left: 20, right: 30 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                    <XAxis type="number" hide />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      width={100} 
+                      axisLine={false} 
+                      tickLine={false}
+                      tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                    />
+                    <Tooltip 
+                      cursor={{ fill: '#f8fafc' }}
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Bar dataKey="applications" fill="#3b82f6" radius={[0, 8, 8, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400 font-bold italic">No applications recorded yet</div>
+              )}
+            </div>
+          </div>
+        </motion.div>
 
         {/* Tabs and Filters */}
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-8">
