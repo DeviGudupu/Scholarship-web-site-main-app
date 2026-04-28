@@ -96,16 +96,6 @@ public class AuthController {
 
         String email = request.getEmail().trim().toLowerCase();
         
-        // --- OTP VERIFICATION START ---
-        String storedOtp = otpStorage.get(email);
-        if (storedOtp == null || !storedOtp.equals(request.getOtp())) {
-            System.out.println("DEBUG: Registration failed - Invalid OTP for: " + email);
-            return ResponseEntity.badRequest().body("Invalid or expired OTP. Please try again.");
-        }
-        // OTP verified, remove it from storage
-        otpStorage.remove(email);
-        // --- OTP VERIFICATION END ---
-        
         // Use the more comprehensive existsByEmail check
         if (userRepository.existsByEmail(email)) {
             System.out.println("DEBUG: Registration failed - Email already exists: " + email);

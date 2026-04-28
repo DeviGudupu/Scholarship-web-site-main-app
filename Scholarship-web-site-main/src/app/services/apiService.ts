@@ -62,7 +62,6 @@ api.interceptors.response.use(
 // Modular service objects
 export const authService = {
   login: (credentials: any) => api.post('/auth/login', credentials),
-  sendOtp: (email: string) => api.post('/auth/send-otp', { email }),
   register: (userData: any) => api.post('/auth/register', userData),
 };
 

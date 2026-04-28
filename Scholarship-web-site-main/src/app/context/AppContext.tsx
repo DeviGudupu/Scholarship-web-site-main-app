@@ -42,8 +42,7 @@ interface AppContextType {
   user: User | null;
   login: (email: string, password: string, role: 'student' | 'admin') => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
-  register: (email: string, password: string, name: string, role: 'student' | 'admin', otp: string) => Promise<{ success: boolean; message?: string }>;
-  sendOtp: (email: string) => Promise<{ success: boolean; message?: string }>;
+  register: (email: string, password: string, name: string, role: 'student' | 'admin') => Promise<{ success: boolean; message?: string }>;
   scholarships: Scholarship[];
   applications: Application[];
   addApplication: (scholarshipId: string, details: any) => Promise<void>;
@@ -120,19 +119,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setUser(null);
   };
 
-  const register = async (email: string, password: string, name: string, role: 'student' | 'admin', otp: string): Promise<{ success: boolean; message?: string }> => {
+  const register = async (email: string, password: string, name: string, role: 'student' | 'admin'): Promise<{ success: boolean; message?: string }> => {
     try {
-      const data = await authService.register({ email, password, name, role, otp });
+      const data = await authService.register({ email, password, name, role });
       setUser(data as User);
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, message: error.message };
-    }
-  };
-
-  const sendOtp = async (email: string): Promise<{ success: boolean; message?: string }> => {
-    try {
-      await authService.sendOtp(email);
       return { success: true };
     } catch (error: any) {
       return { success: false, message: error.message };
@@ -203,7 +193,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       login,
       logout,
       register,
-      sendOtp,
       scholarships,
       applications,
       addApplication,

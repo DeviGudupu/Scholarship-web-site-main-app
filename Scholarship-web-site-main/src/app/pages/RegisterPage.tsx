@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, User, Mail, Lock, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, Shield, AlertCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useApp } from '../context/AppContext';
 
@@ -14,16 +14,13 @@ type RegisterFormInputs = {
 const RegisterPage: React.FC = () => {
   const [role, setRole] = useState<'student' | 'admin'>('student');
   const [apiError, setApiError] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState('');
-  const { register: registerUser, sendOtp } = useApp();
+  const { register: registerUser } = useApp();
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     watch,
-    getValues,
     formState: { errors, isSubmitting }
   } = useForm<RegisterFormInputs>({
     mode: 'onChange'
@@ -31,39 +28,10 @@ const RegisterPage: React.FC = () => {
 
   const password = watch('password');
 
-  const handleSendOtp = async () => {
-    const email = getValues('email');
-    if (!email) {
-      setApiError('Please enter your email first.');
-      return;
-    }
-    setApiError('');
-    try {
-      const result = await sendOtp(email);
-      if (result.success) {
-        setOtpSent(true);
-      } else {
-        setApiError(result.message || 'Failed to send OTP.');
-      }
-    } catch (err: any) {
-      setApiError(err.message || 'Error sending OTP');
-    }
-  };
-
   const onSubmit = async (data: RegisterFormInputs) => {
-    if (!otpSent) {
-      await handleSendOtp();
-      return;
-    }
-
-    if (otp.length !== 6) {
-      setApiError('Please enter a valid 6-digit OTP.');
-      return;
-    }
-
     setApiError('');
     try {
-      const result = await registerUser(data.email, data.password, data.name, role.toUpperCase() as 'student' | 'admin', otp);
+      const result = await registerUser(data.email, data.password, data.name, role.toUpperCase() as 'student' | 'admin');
       if (result.success) {
         navigate(role === 'admin' ? '/admin' : '/dashboard');
         return;
@@ -87,105 +55,71 @@ const RegisterPage: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {!otpSent ? (
-              <>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Register As</label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setRole('student')}
-                      className={`px-4 py-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1 ${role === 'student' ? 'border-blue-600 bg-blue-50 text-blue-600 ring-4 ring-blue-100' : 'border-gray-200 text-gray-600'
-                        }`}
-                    >
-                      <User className="h-5 w-5" />
-                      <span className="text-xs font-bold">Student</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRole('admin')}
-                      className={`px-4 py-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1 ${role === 'admin' ? 'border-blue-600 bg-blue-50 text-blue-600 ring-4 ring-blue-100' : 'border-gray-200 text-gray-600'
-                        }`}
-                    >
-                      <Shield className="h-5 w-5" />
-                      <span className="text-xs font-bold">Admin</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      {...register('name', { required: 'Name is required' })}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
-                      placeholder="Full Name"
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type="email"
-                      {...register('email', { required: 'Email is required' })}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
-                      placeholder="Email Address"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                      <input
-                        type="password"
-                        {...register('password', { required: true, minLength: 6 })}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm"
-                        placeholder="Password"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                      <input
-                        type="password"
-                        {...register('confirmPassword', { validate: v => v === password })}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm"
-                        placeholder="Confirm"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-6 py-4">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-green-50 text-green-600 rounded-full mb-3">
-                    <Mail className="h-6 w-6" />
-                  </div>
-                  <h3 className="font-bold text-gray-900">Verify your email</h3>
-                  <p className="text-xs text-gray-500 mt-1">We've sent a 6-digit code to <span className="font-bold text-gray-900">{getValues('email')}</span></p>
-                </div>
-
-                <div className="relative">
-                  <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    className="w-full pl-10 pr-4 py-4 border-2 border-blue-100 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-center text-2xl font-black tracking-[0.5em]"
-                    placeholder="000000"
-                  />
-                </div>
-
-                <button 
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Register As</label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
                   type="button"
-                  onClick={() => setOtpSent(false)}
-                  className="w-full text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-blue-600 transition-colors"
+                  onClick={() => setRole('student')}
+                  className={`px-4 py-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1 ${role === 'student' ? 'border-blue-600 bg-blue-50 text-blue-600 ring-4 ring-blue-100' : 'border-gray-200 text-gray-600'
+                    }`}
                 >
-                  ← Edit registration details
+                  <User className="h-5 w-5" />
+                  <span className="text-xs font-bold">Student</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('admin')}
+                  className={`px-4 py-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1 ${role === 'admin' ? 'border-blue-600 bg-blue-50 text-blue-600 ring-4 ring-blue-100' : 'border-gray-200 text-gray-600'
+                    }`}
+                >
+                  <Shield className="h-5 w-5" />
+                  <span className="text-xs font-bold">Admin</span>
                 </button>
               </div>
-            )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  {...register('name', { required: 'Name is required' })}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+                  placeholder="Full Name"
+                />
+              </div>
+
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  type="email"
+                  {...register('email', { required: 'Email is required' })}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+                  placeholder="Email Address"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <input
+                    type="password"
+                    {...register('password', { required: true, minLength: 6 })}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm"
+                    placeholder="Password"
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <input
+                    type="password"
+                    {...register('confirmPassword', { validate: v => v === password })}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm"
+                    placeholder="Confirm"
+                  />
+                </div>
+              </div>
+            </div>
 
             {apiError && (
               <div className="bg-red-50 border-l-4 border-red-500 text-red-700 text-[11px] rounded-lg px-4 py-3 flex items-start shadow-sm leading-relaxed">
@@ -202,7 +136,7 @@ const RegisterPage: React.FC = () => {
               {isSubmitting ? (
                 <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                otpSent ? 'Complete Registration' : `Send OTP & Register`
+                'Create Account'
               )}
             </button>
           </form>
