@@ -11,7 +11,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/scholarships")
-@CrossOrigin(origins = "*")
 public class ScholarshipController {
 
     @Autowired
